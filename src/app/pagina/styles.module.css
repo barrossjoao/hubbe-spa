@@ -1,5 +1,5 @@
 .flexContainer{
     display: flex;
     justify-content: center;
-    align-self: center;
+    align-items: center;
 }

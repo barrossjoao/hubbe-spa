@@ -1,43 +1,45 @@
-'use client';
-import React, { useEffect } from "react";
-import io from "socket.io-client";
+"use client";
+import React, { useState, useEffect } from "react";
+import WebSocketClient from "../../WebSocketClient";
 import styles from "./styles.module.css";
+import PageConnected from "@/components/PageConnected/PageConnected";
+import PageOccupied from "@/components/PageOccupied/PageOccupied";
 
+function App() {
+  const [socketClient, setSocketClient] = useState(null);
+  const [isPageOccupied, setIsPageOccupied] = useState(null);
 
-const Pagina = () => {
   useEffect(() => {
-    const socket = io("http://localhost:8080"); 
-
-
-    socket.on("message", (data) => {
-      console.log("Recebido do servidor:", data);
-
+    const client = new WebSocketClient();
+    client.setOnMessageCallback((event) => {
+      if (event.data === "Occupied") {
+        setIsPageOccupied(true);
+      } else if (event.data === "PageAvailable") {
+        setIsPageOccupied(false);
+        setSocketClient(new WebSocketClient());
+      }
     });
 
-    socket.on("connect", () => {
-      console.log("Conectado ao servidor WebSocket");
-    });
+    client.onclose = () => {
+      setTimeout(() => {
+        setSocketClient(new WebSocketClient());
+      }, 1000);
+    };
 
-    socket.on("disconnect", () => {
-      console.log("Desconectado do servidor WebSocket");
-    });
+    setSocketClient(client);
 
     return () => {
-      socket.disconnect();
+      if (client) {
+        client.socket.close();
+      }
     };
   }, []);
 
-  const ocuparTelaSegura = () => {
-    console.log()
-  };
-
   return (
     <div className={styles.flexContainer}>
-      <div>
-        <button onClick={ocuparTelaSegura}>Ocupar Tela Segura</button>
-      </div>
+      {isPageOccupied ? <PageOccupied /> : <PageConnected />}
     </div>
   );
-};
+}
 
-export default Pagina;
+export default App;
